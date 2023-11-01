@@ -1,25 +1,52 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useRef } from "react";
+import { DetailsList, Selection, SelectionMode } from "@fluentui/react";
 
-function App() {
+const data = Array.from(Array(500).keys()).map((item) => ({
+  key: item,
+  name: `Item ${item}`,
+}));
+
+export default function App() {
+  const [, setRefresh] = useState(true);
+  const [selection] = useState(
+    new Selection({
+      onSelectionChanged: () => _onSelectionChanged(),
+    }),
+  );
+
+  const selectedKeys = useRef([]);
+
+  const _onSelectionChanged = () => {
+    const previousSelectedKeys = selectedKeys.current;
+    const keysInSelection = selection.getItems().map(({ key }) => key);
+    const currentSelectedKeys = selection.getSelection().map(({ key }) => key);
+
+    const newSelectedKeys = [
+      ...currentSelectedKeys,
+      ...previousSelectedKeys.filter(
+        (
+          key,
+        ) =>
+          !keysInSelection.includes(key) ||
+          (keysInSelection.includes(key) && currentSelectedKeys.includes(key)),
+      ),
+    ];
+    const newUniqueKeys = [...new Set(newSelectedKeys)];
+
+    selectedKeys.current = newUniqueKeys;
+    setRefresh((prevValue) => !prevValue);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <DetailsList
+        setKey="multiple"
+        items={data}
+        selectionMode={SelectionMode.multiple}
+        selectionPreservedOnEmptyClick
+        selection={selection}
+        columns={[{ key: "name", fieldName: "name", name: "Name" }]}
+      />
+    </>
   );
 }
-
-export default App;
